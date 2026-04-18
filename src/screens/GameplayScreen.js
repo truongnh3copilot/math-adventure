@@ -19,9 +19,15 @@ export default function GameplayScreen() {
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [timerRunning, setTimerRunning] = useState(true);
   const [muted, setMuted] = useState(isMuted());
+  const [shuffledChoices, setShuffledChoices] = useState([]);
 
   const { currentQuestions, currentQuestionIndex, starsEarned, currentLevel } = state;
   const question = currentQuestions[currentQuestionIndex];
+
+  // Reset shuffled choices whenever the question changes
+  useEffect(() => {
+    setShuffledChoices([...question.choices]);
+  }, [currentQuestionIndex]);
   const character = CHARACTERS.find((c) => c.id === state.selectedCharacter) || CHARACTERS[0];
   const total = currentQuestions.length;
   const isLastQuestion = currentQuestionIndex >= total - 1;
@@ -60,6 +66,8 @@ export default function GameplayScreen() {
         setFeedback(null);
         setSelectedAnswer(null);
         setTimerRunning(true);
+        // Shuffle choice positions so the child can't rely on position memory
+        setShuffledChoices((prev) => [...prev].sort(() => Math.random() - 0.5));
       }, 900);
     }
   }, [feedback, question, isLastQuestion, dispatch]);
@@ -72,6 +80,7 @@ export default function GameplayScreen() {
     setTimeout(() => {
       setFeedback(null);
       setTimerRunning(true);
+      setShuffledChoices((prev) => [...prev].sort(() => Math.random() - 0.5));
     }, 900);
   }, [feedback, dispatch]);
 
@@ -168,7 +177,7 @@ export default function GameplayScreen() {
         </div>
 
         <div className="grid grid-cols-2 gap-4 w-full max-w-lg">
-          {question.choices.map((choice, i) => (
+          {(shuffledChoices.length ? shuffledChoices : question.choices).map((choice, i) => (
             <AnswerButton
               key={`${currentQuestionIndex}-${i}`}
               value={choice}
