@@ -1,13 +1,14 @@
-import React, { useRef } from 'react';
+import React, { useMemo } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Star, Trophy, Home } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { buildLevelMap, generateLevelQuestions, MODES } from '../data/levels';
 
 const LEVELS_BEFORE = 3;
-const LEVELS_AFTER = 7;
+const LEVELS_AFTER  = 7;
 
 const LEVEL_ICONS = ['🍎', '🚀', '🎈', '🐱', '💎', '🌈', '⭐', '🎯', '🔥', '🎪'];
+
 const DIFFICULTY_COLORS = {
   easy:   'bg-emerald-400 border-emerald-600',
   medium: 'bg-sky-400 border-sky-600',
@@ -17,25 +18,34 @@ const DIFFICULTY_COLORS = {
 
 export default function LevelMapScreen() {
   const { state, dispatch } = useGame();
-  const scrollRef = useRef(null);
-  const mode = state.selectedMode;
-  const levels = buildLevelMap(mode);
-  const modeInfo = MODES.find((m) => m.id === mode);
+  const mode       = state.selectedMode;
+  const modeInfo   = MODES.find((m) => m.id === mode);
   const modeProgress = state.progress[mode] || {};
-  const totalStars = Object.values(modeProgress).reduce((sum, p) => sum + (p?.stars || 0), 0);
+
+  // Build level map once per mode
+  const levels = useMemo(() => buildLevelMap(mode), [mode]);
+
+  const totalStars = useMemo(
+    () => Object.values(modeProgress).reduce((sum, p) => sum + (p?.stars || 0), 0),
+    [modeProgress]
+  );
 
   function isUnlocked(levelId) {
     if (levelId === 1) return true;
     return modeProgress[levelId]?.unlocked === true || modeProgress[levelId - 1]?.stars >= 1;
   }
 
-  const currentIndex = levels.findIndex(
-    (level) => isUnlocked(level.id) && !(modeProgress[level.id]?.stars > 0)
-  );
-  const centerIndex = currentIndex === -1 ? levels.length - 1 : currentIndex;
+  const centerIndex = useMemo(() => {
+    const idx = levels.findIndex(
+      (level) =>
+        (level.id === 1 || modeProgress[level.id]?.unlocked || modeProgress[level.id - 1]?.stars >= 1) &&
+        !(modeProgress[level.id]?.stars > 0)
+    );
+    return idx === -1 ? levels.length - 1 : idx;
+  }, [levels, modeProgress]);
 
   const start = Math.max(0, centerIndex - LEVELS_BEFORE);
-  const end = Math.min(levels.length, centerIndex + LEVELS_AFTER + 1);
+  const end   = Math.min(levels.length, centerIndex + LEVELS_AFTER + 1);
   const visibleLevels = levels.slice(start, end);
 
   function handleStartLevel(level) {
@@ -46,16 +56,12 @@ export default function LevelMapScreen() {
 
   return (
     <div className="min-h-screen bg-[#eef2ff] font-sans text-slate-900 overflow-x-auto overflow-y-hidden relative select-none">
-      {/* Background clouds */}
-      <div className="absolute top-40 left-1/4 text-6xl opacity-20 animate-bounce">☁️</div>
-      <div className="absolute top-20 left-2/4 text-6xl opacity-20 animate-pulse">☁️</div>
-      <div className="absolute top-60 right-1/4 text-6xl opacity-20 animate-bounce">☁️</div>
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 p-4">
         <div className="max-w-xl mx-auto flex items-center justify-between bg-white rounded-2xl shadow-[0_8px_0_0_#e2e8f0] px-4 py-3 border-2 border-slate-200">
           <button
-            className="p-2 hover:bg-slate-100 rounded-xl transition-all active:translate-y-1"
+            className="p-2 hover:bg-slate-100 rounded-xl transition-colors active:translate-y-0.5"
             onClick={() => dispatch({ type: 'SET_SCREEN', screen: 'home' })}
           >
             <Home size={28} className="text-indigo-500" />
@@ -75,37 +81,37 @@ export default function LevelMapScreen() {
         </div>
       </header>
 
-      {/* Level track */}
+      {/* Level track — static layout, no spring animations per node */}
       <main className="h-screen flex items-center px-20 min-w-max pt-24">
         <div className="relative flex items-center gap-24 py-20">
-          {/* Background path line */}
+
+          {/* Background path */}
           <div className="absolute left-10 right-10 h-4 bg-slate-300/30 rounded-full top-1/2 -translate-y-1/2 -z-10" />
 
           {visibleLevels.map((level, i) => {
-            const unlocked = isUnlocked(level.id);
-            const stars = modeProgress[level.id]?.stars || 0;
+            const unlocked    = isUnlocked(level.id);
+            const stars       = modeProgress[level.id]?.stars || 0;
             const isCompleted = stars > 0;
-            const isCurrent = level.id === levels[centerIndex]?.id;
-            const icon = LEVEL_ICONS[(level.id - 1) % LEVEL_ICONS.length];
-            const colorClass = DIFFICULTY_COLORS[level.difficulty] || DIFFICULTY_COLORS.easy;
-            const yOffset = Math.sin(i * 1.5) * 80;
+            const isCurrent   = level.id === levels[centerIndex]?.id;
+            const icon        = LEVEL_ICONS[(level.id - 1) % LEVEL_ICONS.length];
+            const colorClass  = DIFFICULTY_COLORS[level.difficulty] || DIFFICULTY_COLORS.easy;
+            // Static sinusoidal offset — no animation, just CSS transform
+            const yOffset     = Math.sin(i * 1.5) * 80;
 
             return (
-              <motion.div
+              <div
                 key={level.id}
-                initial={{ opacity: 0, y: 30 }}
-                animate={{ opacity: 1, y: yOffset }}
-                transition={{ delay: i * 0.05, type: 'spring', stiffness: 200 }}
-                className="relative flex flex-col items-center transition-all duration-300"
+                className="level-node-enter relative flex flex-col items-center"
+                style={{ transform: `translateY(${yOffset}px)`, animationDelay: `${i * 30}ms` }}
               >
-                {/* Stars above completed levels */}
+                {/* Stars above completed */}
                 {isCompleted && (
-                  <div className="absolute -top-8 flex gap-1">
+                  <div className="absolute -top-8 flex gap-0.5">
                     {[1, 2, 3].map((s) => (
                       <Star
                         key={s}
-                        size={18}
-                        className={s <= stars ? 'text-amber-400 fill-amber-400 drop-shadow-sm' : 'text-slate-300 fill-slate-300'}
+                        size={16}
+                        className={s <= stars ? 'text-amber-400 fill-amber-400' : 'text-slate-300 fill-slate-300'}
                       />
                     ))}
                   </div>
@@ -115,56 +121,47 @@ export default function LevelMapScreen() {
                 <button
                   onClick={() => handleStartLevel(level)}
                   disabled={!unlocked}
-                  className={`
-                    relative flex items-center justify-center rounded-full text-5xl
-                    transition-all active:scale-95 border-b-[10px]
-                    ${unlocked
-                      ? `${colorClass} shadow-2xl`
-                      : 'bg-slate-300 border-slate-400 cursor-not-allowed shadow-none'
-                    }
-                    ${isCurrent
+                  className={[
+                    'relative flex items-center justify-center rounded-full text-5xl',
+                    'border-b-[10px] transition-transform duration-100 active:scale-95',
+                    unlocked
+                      ? `${colorClass} shadow-xl`
+                      : 'bg-slate-300 border-slate-400 cursor-not-allowed',
+                    isCurrent
                       ? 'w-32 h-32 text-6xl animate-bounce ring-8 ring-white/50'
-                      : 'w-28 h-28'
-                    }
-                  `}
+                      : 'w-28 h-28',
+                  ].join(' ')}
                 >
-                  {!unlocked ? (
-                    <Lock size={40} className="text-slate-500" />
-                  ) : (
-                    <span className="drop-shadow-lg">{icon}</span>
-                  )}
-
-                  {/* Glow for current level */}
-                  {isCurrent && (
-                    <div className="absolute -z-10 w-48 h-48 bg-orange-400/20 blur-3xl rounded-full" />
-                  )}
+                  {!unlocked
+                    ? <Lock size={36} className="text-slate-500" />
+                    : <span className="drop-shadow-md">{icon}</span>
+                  }
                 </button>
 
                 {/* Level label */}
-                <div className={`
-                  mt-5 px-6 py-1.5 rounded-full font-black text-sm border-2 whitespace-nowrap
-                  ${!unlocked
+                <div className={[
+                  'mt-5 px-5 py-1 rounded-full font-black text-sm border-2 whitespace-nowrap',
+                  !unlocked
                     ? 'bg-slate-200 border-slate-300 text-slate-400'
-                    : 'bg-white border-slate-200 text-slate-700 shadow-md'
-                  }
-                `}>
+                    : 'bg-white border-slate-200 text-slate-700 shadow-sm',
+                ].join(' ')}>
                   LVL {level.id}
                 </div>
-              </motion.div>
+              </div>
             );
           })}
 
-          {/* Trophy at end */}
+          {/* Trophy — one motion element is fine */}
           <motion.div
             className="relative ml-10"
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: end >= levels.length ? 1 : 0.35, scale: 1 }}
-            transition={{ delay: visibleLevels.length * 0.05 }}
+            initial={{ opacity: 0, scale: 0.7 }}
+            animate={{ opacity: end >= levels.length ? 1 : 0.3, scale: 1 }}
+            transition={{ duration: 0.35, ease: 'easeOut' }}
           >
-            <div className="w-40 h-40 bg-yellow-400 rounded-[40px] border-b-[12px] border-yellow-600 flex items-center justify-center shadow-2xl -rotate-6">
-              <Trophy size={80} className="text-white drop-shadow-xl" />
+            <div className="w-36 h-36 bg-yellow-400 rounded-[36px] border-b-[10px] border-yellow-600 flex items-center justify-center shadow-xl -rotate-6">
+              <Trophy size={72} className="text-white drop-shadow-md" />
             </div>
-            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-white px-8 py-2 rounded-full border-4 border-yellow-500 font-black text-yellow-600 whitespace-nowrap text-lg shadow-lg">
+            <div className="absolute -bottom-6 left-1/2 -translate-x-1/2 bg-white px-6 py-1.5 rounded-full border-4 border-yellow-500 font-black text-yellow-600 whitespace-nowrap text-base shadow-md">
               GOAL! 🏆
             </div>
           </motion.div>
@@ -172,7 +169,7 @@ export default function LevelMapScreen() {
       </main>
 
       {/* Swipe hint */}
-      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-indigo-600/10 backdrop-blur-sm px-4 py-2 rounded-full text-indigo-600 font-bold text-xs animate-pulse">
+      <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-indigo-600/10 px-4 py-2 rounded-full text-indigo-600 font-bold text-xs animate-pulse pointer-events-none">
         Swipe right to see more ➔
       </div>
     </div>
