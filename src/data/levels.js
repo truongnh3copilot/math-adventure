@@ -29,20 +29,22 @@ function getDifficultyForLevel(levelIndex) {
   return 'expert';
 }
 
+// Tuned for ages 4-5: very small numbers, gradual growth across 100 levels
 function getAddSubMax(levelId) {
-  if (levelId < 10) return 10;
-  if (levelId < 20) return 20;
-  if (levelId < 50) return 30;
-  if (levelId < 80) return 40;
-  return 50;
+  if (levelId < 10) return 5;
+  if (levelId < 20) return 10;
+  if (levelId < 40) return 15;
+  if (levelId < 60) return 20;
+  if (levelId < 80) return 25;
+  return 30;
 }
 
 function getMultMax(levelId) {
-  if (levelId < 10) return 2;
-  if (levelId < 20) return 5;
-  if (levelId < 50) return 7;
-  if (levelId < 80) return 9;
-  return 12;
+  if (levelId < 20) return 2;   // only ×2 table
+  if (levelId < 40) return 3;   // ×2–×3
+  if (levelId < 60) return 5;   // up to ×5
+  if (levelId < 80) return 7;
+  return 9;
 }
 
 function generateQuestion(mode, levelId) {
@@ -66,11 +68,14 @@ function generateQuestion(mode, levelId) {
     answer = a * b;
   }
 
+  // Keep wrong answers very close to the correct answer for young children
   const wrongAnswers = new Set();
-  const deltaRange = Math.max(3, Math.floor(answer * 0.2));
-  while (wrongAnswers.size < 3) {
+  const deltaRange = answer <= 5 ? 2 : answer <= 10 ? 3 : Math.max(3, Math.floor(answer * 0.15));
+  let attempts = 0;
+  while (wrongAnswers.size < 3 && attempts < 30) {
+    attempts++;
     const delta = Math.floor(Math.random() * deltaRange) + 1;
-    const wrong = Math.random() > 0.5 ? answer + delta : Math.max(0, answer - delta);
+    const wrong = Math.random() > 0.5 ? answer + delta : Math.max(1, answer - delta);
     if (wrong !== answer) wrongAnswers.add(wrong);
   }
 
@@ -80,7 +85,7 @@ function generateQuestion(mode, levelId) {
     text: `${a} ${op} ${b} = ?`,
     a, b, op, answer,
     choices,
-    hint: (op === '+' || op === '-') && a <= 10 && b <= 10 ? getFruitHint(a) : null,
+    hint: (op === '+' || op === '-') && a <= 10 ? getFruitHint(a) : null,
   };
 }
 
