@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
+import { playFanfare } from '../utils/audio';
 import { CHARACTERS } from '../data/levels';
 import StarRating from '../components/StarRating';
 import RewardPopup from '../components/RewardPopup';
@@ -9,6 +10,7 @@ import CharacterMascot from '../components/CharacterMascot';
 export default function LevelCompleteScreen() {
   const { state, dispatch } = useGame();
   const [showReward, setShowReward] = useState(true);
+  useEffect(() => { playFanfare(); }, []);
   const character = CHARACTERS.find((c) => c.id === state.selectedCharacter) || CHARACTERS[0];
   const stars = state.starsEarned;
   const coins = stars * 5;

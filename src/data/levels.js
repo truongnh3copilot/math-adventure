@@ -29,40 +29,36 @@ function getDifficultyForLevel(levelIndex) {
   return 'expert';
 }
 
-function getMaxNum(difficulty) {
-  switch (difficulty) {
-    case 'easy':   return 10;
-    case 'medium': return 50;
-    case 'hard':   return 100;
-    case 'expert': return 500;
-    default:       return 10;
-  }
+function getAddSubMax(levelId) {
+  if (levelId < 10) return 10;
+  if (levelId < 20) return 20;
+  if (levelId < 50) return 30;
+  if (levelId < 80) return 40;
+  return 50;
 }
 
-function getMultMax(difficulty) {
-  switch (difficulty) {
-    case 'easy':   return 5;
-    case 'medium': return 10;
-    case 'hard':   return 20;
-    case 'expert': return 30;
-    default:       return 5;
-  }
+function getMultMax(levelId) {
+  if (levelId < 10) return 2;
+  if (levelId < 20) return 5;
+  if (levelId < 50) return 7;
+  if (levelId < 80) return 9;
+  return 12;
 }
 
-function generateQuestion(mode, difficulty) {
-  const maxNum = getMaxNum(difficulty);
-  const multMax = getMultMax(difficulty);
+function generateQuestion(mode, levelId) {
   const ops = mode === 'mixed' ? ['+', '-', '×'] : [mode === 'addition' ? '+' : mode === 'subtraction' ? '-' : '×'];
   const op = ops[Math.floor(Math.random() * ops.length)];
+  const maxVal = getAddSubMax(levelId);
+  const multMax = getMultMax(levelId);
 
   let a, b, answer;
   if (op === '+') {
-    a = Math.floor(Math.random() * maxNum) + 1;
-    b = Math.floor(Math.random() * maxNum) + 1;
+    a = Math.floor(Math.random() * (maxVal - 1)) + 1;
+    b = Math.floor(Math.random() * (maxVal - a)) + 1;
     answer = a + b;
   } else if (op === '-') {
-    b = Math.floor(Math.random() * maxNum) + 1;
-    a = b + Math.floor(Math.random() * maxNum) + 1;
+    b = Math.floor(Math.random() * (maxVal - 1)) + 1;
+    a = b + Math.floor(Math.random() * (maxVal - b)) + 1;
     answer = a - b;
   } else {
     a = Math.floor(Math.random() * multMax) + 1;
@@ -71,7 +67,7 @@ function generateQuestion(mode, difficulty) {
   }
 
   const wrongAnswers = new Set();
-  const deltaRange = Math.max(5, Math.floor(answer * 0.2));
+  const deltaRange = Math.max(3, Math.floor(answer * 0.2));
   while (wrongAnswers.size < 3) {
     const delta = Math.floor(Math.random() * deltaRange) + 1;
     const wrong = Math.random() > 0.5 ? answer + delta : Math.max(0, answer - delta);
@@ -88,8 +84,8 @@ function generateQuestion(mode, difficulty) {
   };
 }
 
-export function generateLevelQuestions(mode, difficulty, count = 10) {
-  return Array.from({ length: count }, () => generateQuestion(mode, difficulty));
+export function generateLevelQuestions(mode, levelId, count = 6) {
+  return Array.from({ length: count }, () => generateQuestion(mode, levelId));
 }
 
 export function buildLevelMap(mode) {
@@ -98,7 +94,7 @@ export function buildLevelMap(mode) {
     label: `Level ${i + 1}`,
     difficulty: getDifficultyForLevel(i),
     mode,
-    questionsCount: 10,
+    questionsCount: 6,
     starsRequired: i === 0 ? 0 : 1,
   }));
 }

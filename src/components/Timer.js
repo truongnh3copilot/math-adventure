@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-export default function Timer({ duration = 30, running, onExpire }) {
+export default function Timer({ duration = 15, running, onExpire, onTick }) {
   const [remaining, setRemaining] = useState(duration);
   const intervalRef = useRef(null);
 
@@ -21,6 +21,7 @@ export default function Timer({ duration = 30, running, onExpire }) {
           onExpire?.();
           return 0;
         }
+        onTick?.(prev - 1);
         return prev - 1;
       });
     }, 1000);
@@ -28,31 +29,34 @@ export default function Timer({ duration = 30, running, onExpire }) {
   }, [running, onExpire]);
 
   const pct = remaining / duration;
-  const color = pct > 0.5 ? '#51CF66' : pct > 0.25 ? '#FFE66D' : '#FF6B6B';
+  const stroke = pct > 0.5 ? '#34d399' : pct > 0.25 ? '#fbbf24' : '#fb7185';
+  const circumference = 2 * Math.PI * 22;
 
   return (
-    <div style={styles.wrapper}>
-      <svg width={56} height={56} viewBox="0 0 56 56">
-        <circle cx={28} cy={28} r={24} fill="none" stroke="#eee" strokeWidth={5} />
-        <motion.circle
-          cx={28} cy={28} r={24}
-          fill="none"
-          stroke={color}
-          strokeWidth={5}
-          strokeLinecap="round"
-          strokeDasharray={`${2 * Math.PI * 24}`}
-          strokeDashoffset={`${2 * Math.PI * 24 * (1 - pct)}`}
-          transform="rotate(-90 28 28)"
-          animate={{ stroke: color }}
-          transition={{ duration: 0.5 }}
-        />
-      </svg>
-      <span style={{ ...styles.label, color }}>{remaining}</span>
+    <div className="flex flex-col items-center gap-1">
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Time</span>
+      <div className="relative w-16 h-16 bg-white rounded-2xl border-2 border-slate-200 shadow-[0_4px_0_0_#e2e8f0] flex items-center justify-center">
+        <svg width={52} height={52} viewBox="0 0 52 52" className="-rotate-90">
+          <circle cx={26} cy={26} r={22} fill="none" stroke="#e2e8f0" strokeWidth={4} />
+          <motion.circle
+            cx={26} cy={26} r={22}
+            fill="none"
+            stroke={stroke}
+            strokeWidth={4}
+            strokeLinecap="round"
+            strokeDasharray={circumference}
+            strokeDashoffset={circumference * (1 - pct)}
+            animate={{ stroke }}
+            transition={{ duration: 0.4 }}
+          />
+        </svg>
+        <span
+          className="absolute font-black text-lg leading-none"
+          style={{ color: stroke }}
+        >
+          {remaining}
+        </span>
+      </div>
     </div>
   );
 }
-
-const styles = {
-  wrapper: { position: 'relative', display: 'inline-flex', alignItems: 'center', justifyContent: 'center' },
-  label: { position: 'absolute', fontSize: 18, fontWeight: 900, fontFamily: 'Nunito, sans-serif' },
-};
