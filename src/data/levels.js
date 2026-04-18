@@ -22,8 +22,36 @@ export function getFruitHint(num) {
   return null;
 }
 
+function getDifficultyForLevel(levelIndex) {
+  if (levelIndex < 30) return 'easy';
+  if (levelIndex < 60) return 'medium';
+  if (levelIndex < 85) return 'hard';
+  return 'expert';
+}
+
+function getMaxNum(difficulty) {
+  switch (difficulty) {
+    case 'easy':   return 10;
+    case 'medium': return 50;
+    case 'hard':   return 100;
+    case 'expert': return 500;
+    default:       return 10;
+  }
+}
+
+function getMultMax(difficulty) {
+  switch (difficulty) {
+    case 'easy':   return 5;
+    case 'medium': return 10;
+    case 'hard':   return 20;
+    case 'expert': return 30;
+    default:       return 5;
+  }
+}
+
 function generateQuestion(mode, difficulty) {
-  const maxNum = difficulty === 'easy' ? 5 : difficulty === 'medium' ? 10 : 20;
+  const maxNum = getMaxNum(difficulty);
+  const multMax = getMultMax(difficulty);
   const ops = mode === 'mixed' ? ['+', '-', '×'] : [mode === 'addition' ? '+' : mode === 'subtraction' ? '-' : '×'];
   const op = ops[Math.floor(Math.random() * ops.length)];
 
@@ -37,14 +65,15 @@ function generateQuestion(mode, difficulty) {
     a = b + Math.floor(Math.random() * maxNum) + 1;
     answer = a - b;
   } else {
-    a = Math.floor(Math.random() * (difficulty === 'easy' ? 3 : 5)) + 1;
-    b = Math.floor(Math.random() * (difficulty === 'easy' ? 3 : 5)) + 1;
+    a = Math.floor(Math.random() * multMax) + 1;
+    b = Math.floor(Math.random() * multMax) + 1;
     answer = a * b;
   }
 
   const wrongAnswers = new Set();
+  const deltaRange = Math.max(5, Math.floor(answer * 0.2));
   while (wrongAnswers.size < 3) {
-    const delta = Math.floor(Math.random() * 5) + 1;
+    const delta = Math.floor(Math.random() * deltaRange) + 1;
     const wrong = Math.random() > 0.5 ? answer + delta : Math.max(0, answer - delta);
     if (wrong !== answer) wrongAnswers.add(wrong);
   }
@@ -59,18 +88,17 @@ function generateQuestion(mode, difficulty) {
   };
 }
 
-export function generateLevelQuestions(mode, difficulty, count = 5) {
+export function generateLevelQuestions(mode, difficulty, count = 10) {
   return Array.from({ length: count }, () => generateQuestion(mode, difficulty));
 }
 
 export function buildLevelMap(mode) {
-  const difficulties = ['easy', 'easy', 'medium', 'medium', 'hard'];
-  return Array.from({ length: 10 }, (_, i) => ({
+  return Array.from({ length: 100 }, (_, i) => ({
     id: i + 1,
     label: `Level ${i + 1}`,
-    difficulty: difficulties[Math.min(i, difficulties.length - 1)],
+    difficulty: getDifficultyForLevel(i),
     mode,
-    questionsCount: 5,
+    questionsCount: 10,
     starsRequired: i === 0 ? 0 : 1,
   }));
 }

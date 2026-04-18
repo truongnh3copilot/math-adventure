@@ -1,6 +1,15 @@
 import React, { createContext, useContext, useReducer, useEffect } from 'react';
 
 const STORAGE_KEY = 'math_adventure_progress';
+const HISTORY_API = 'http://localhost:3001/api/history';
+
+function recordHistory(mode, levelId, stars, coins) {
+  fetch(HISTORY_API, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ mode, levelId, stars, coins }),
+  }).catch(() => {});
+}
 
 const initialState = {
   screen: 'home',
@@ -109,6 +118,7 @@ function reducer(state, action) {
         [nextLevelId]: { ...(prevProgress[nextLevelId] || {}), unlocked: stars >= 1 },
       };
 
+      recordHistory(mode, levelId, stars, coinsEarned);
       return {
         ...state,
         screen: 'levelComplete',
