@@ -65,9 +65,9 @@ export default function HomeScreen() {
         <motion.div
           animate={{ y: [0, -8, 0] }}
           transition={{ repeat: Infinity, duration: 2.4, ease: 'easeInOut' }}
-          className="text-8xl mb-3 drop-shadow-xl"
+          className="mb-3 drop-shadow-xl"
         >
-          🧮
+          <img src="/logo.svg" alt="Math Quest Logo" className="w-28 h-28" />
         </motion.div>
 
         <div className="bg-white rounded-2xl border-2 border-slate-200 shadow-[0_8px_0_0_#e2e8f0] px-8 py-4 text-center max-w-xs">
