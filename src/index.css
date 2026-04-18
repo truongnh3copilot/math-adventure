@@ -1,0 +1,24 @@
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background: #667eea;
+}
+
+button {
+  font-family: 'Nunito', 'Segoe UI', sans-serif;
+}
+
+:root {
+  --color-primary: #6C63FF;
+  --color-secondary: #FF6B6B;
+  --color-success: #51CF66;
+  --color-warning: #FFE66D;
+  --color-bg: #f8f9fa;
+}
