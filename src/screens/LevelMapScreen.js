@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useRef, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Lock, Star, Trophy, Home } from 'lucide-react';
 import { useGame } from '../context/GameContext';
@@ -18,8 +18,10 @@ const DIFFICULTY_COLORS = {
 
 export default function LevelMapScreen() {
   const { state, dispatch } = useGame();
-  const mode       = state.selectedMode;
-  const modeInfo   = MODES.find((m) => m.id === mode);
+  const scrollRef    = useRef(null);
+  const currentRef   = useRef(null);
+  const mode         = state.selectedMode;
+  const modeInfo     = MODES.find((m) => m.id === mode);
   const modeProgress = state.progress[mode] || {};
 
   // Build level map once per mode
@@ -48,6 +50,16 @@ export default function LevelMapScreen() {
   const end   = Math.min(levels.length, centerIndex + LEVELS_AFTER + 1);
   const visibleLevels = levels.slice(start, end);
 
+  // Auto-scroll to current level on mount
+  useEffect(() => {
+    if (!scrollRef.current || !currentRef.current) return;
+    const container = scrollRef.current;
+    const node      = currentRef.current;
+    const nodeCenter = node.offsetLeft + node.offsetWidth / 2;
+    const target     = nodeCenter - container.clientWidth / 2;
+    container.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
+  }, []);
+
   function handleStartLevel(level) {
     if (!isUnlocked(level.id)) return;
     const questions = generateLevelQuestions(level.mode, level.id, level.questionsCount);
@@ -55,7 +67,7 @@ export default function LevelMapScreen() {
   }
 
   return (
-    <div className="min-h-screen bg-[#eef2ff] font-sans text-slate-900 overflow-x-auto overflow-y-hidden relative select-none">
+    <div ref={scrollRef} className="min-h-screen bg-[#eef2ff] font-sans text-slate-900 overflow-x-auto overflow-y-hidden relative select-none">
 
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 z-50 p-4">
@@ -101,6 +113,7 @@ export default function LevelMapScreen() {
             return (
               <div
                 key={level.id}
+                ref={isCurrent ? currentRef : null}
                 className="level-node-enter relative flex flex-col items-center"
                 style={{ transform: `translateY(${yOffset}px)`, animationDelay: `${i * 30}ms` }}
               >

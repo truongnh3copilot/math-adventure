@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { useGame } from '../context/GameContext';
 import { playFanfare } from '../utils/audio';
+import { buildLevelMap, generateLevelQuestions } from '../data/levels';
 import { CHARACTERS } from '../data/levels';
 import StarRating from '../components/StarRating';
 import RewardPopup from '../components/RewardPopup';
@@ -16,10 +17,18 @@ export default function LevelCompleteScreen() {
   const coins = stars * 5;
   const sticker = stars === 3 ? 1 : 0;
   const levelId = state.currentLevel?.id;
-  const nextLevelExists = levelId < 10;
+  const mode    = state.selectedMode;
+  const levels  = buildLevelMap(mode);
+  const nextLevel = levels.find((l) => l.id === levelId + 1);
 
   function handleRewardContinue() {
     setShowReward(false);
+  }
+
+  function handleNextLevel() {
+    if (!nextLevel) return;
+    const questions = generateLevelQuestions(nextLevel.mode, nextLevel.id, nextLevel.questionsCount);
+    dispatch({ type: 'START_LEVEL', level: nextLevel, questions });
   }
 
   return (
@@ -51,12 +60,12 @@ export default function LevelCompleteScreen() {
         </div>
 
         <div style={styles.btnRow}>
-          {nextLevelExists && (
+          {nextLevel && (
             <motion.button
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
               style={styles.primaryBtn}
-              onClick={() => dispatch({ type: 'SET_SCREEN', screen: 'levelMap' })}
+              onClick={handleNextLevel}
             >
               Next Level →
             </motion.button>
