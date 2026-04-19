@@ -1,6 +1,6 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { X, Star, Volume2, VolumeX } from 'lucide-react';
+import { X, Star, Volume2, VolumeX, Coins } from 'lucide-react';
 import { useGame } from '../context/GameContext';
 import { CHARACTERS } from '../data/levels';
 import QuestionCard from '../components/QuestionCard';
@@ -18,10 +18,12 @@ export default function GameplayScreen() {
   const [feedback, setFeedback] = useState(null);
   const [selectedAnswer, setSelectedAnswer] = useState(null);
   const [timerRunning, setTimerRunning] = useState(true);
+  const [timerBoost, setTimerBoost] = useState(0);
+  const [timedOut, setTimedOut] = useState(false);
   const [muted, setMuted] = useState(isMuted());
   const [shuffledChoices, setShuffledChoices] = useState([]);
 
-  const { currentQuestions, currentQuestionIndex, starsEarned, currentLevel } = state;
+  const { currentQuestions, currentQuestionIndex, starsEarned, currentLevel, totalCoins } = state;
   const question = currentQuestions[currentQuestionIndex];
 
   // Reset shuffled choices whenever the question changes
@@ -51,6 +53,8 @@ export default function GameplayScreen() {
         setFeedback(null);
         setSelectedAnswer(null);
         setTimerRunning(true);
+        setTimerBoost(0);
+        setTimedOut(false);
         if (isLastQuestion) {
           playFanfare();
           dispatch({ type: 'COMPLETE_LEVEL' });
@@ -61,27 +65,29 @@ export default function GameplayScreen() {
     } else {
       playWrong();
       dispatch({ type: 'ANSWER_WRONG' });
+      setTimedOut(false);
       setFeedback('wrong');
-      setTimeout(() => {
-        setFeedback(null);
-        setSelectedAnswer(null);
-        setTimerRunning(true);
-        // Shuffle choice positions so the child can't rely on position memory
-        setShuffledChoices((prev) => [...prev].sort(() => Math.random() - 0.5));
-      }, 900);
     }
   }, [feedback, question, isLastQuestion, dispatch]);
+
+  const handleTryAgain = useCallback(() => {
+    setFeedback(null);
+    setSelectedAnswer(null);
+    setTimerRunning(true);
+    if (timedOut) {
+      setTimerBoost((prev) => prev + 1);
+      dispatch({ type: 'DEDUCT_COINS', amount: 5 });
+    }
+    setTimedOut(false);
+    setShuffledChoices((prev) => [...prev].sort(() => Math.random() - 0.5));
+  }, [timedOut, dispatch]);
 
   const handleTimerExpire = useCallback(() => {
     if (feedback !== null) return;
     playWrong();
     dispatch({ type: 'ANSWER_WRONG' });
+    setTimedOut(true);
     setFeedback('wrong');
-    setTimeout(() => {
-      setFeedback(null);
-      setTimerRunning(true);
-      setShuffledChoices((prev) => [...prev].sort(() => Math.random() - 0.5));
-    }, 900);
   }, [feedback, dispatch]);
 
   const handleTick = useCallback((remaining) => {
@@ -108,9 +114,18 @@ export default function GameplayScreen() {
             <X size={24} className="text-slate-500" />
           </button>
 
-          <div className="flex flex-col items-center">
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Level</span>
-            <span className="text-xl font-black text-indigo-600">{currentLevel?.id}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Level</span>
+              <span className="text-xl font-black text-indigo-600">{currentLevel?.id}</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Gold</span>
+              <span className="flex items-center gap-1 text-xl font-black text-amber-500">
+                <Coins size={18} className="text-amber-400 fill-amber-200" />
+                {totalCoins}
+              </span>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -159,10 +174,11 @@ export default function GameplayScreen() {
         <CharacterMascot character={character} mood={mascotMood} size={64} />
         <Timer
           key={currentQuestionIndex}
-          duration={15}
+          duration={30}
           running={timerRunning}
           onExpire={handleTimerExpire}
           onTick={handleTick}
+          boost={timerBoost}
         />
       </div>
 
@@ -191,7 +207,7 @@ export default function GameplayScreen() {
         </div>
       </div>
 
-      <FeedbackOverlay show={feedback !== null} correct={feedback === 'correct'} />
+      <FeedbackOverlay show={feedback !== null} correct={feedback === 'correct'} timedOut={timedOut} onTryAgain={handleTryAgain} />
     </div>
   );
 }

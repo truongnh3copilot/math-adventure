@@ -100,6 +100,8 @@ function reducer(state, action) {
         difficulty: newDifficulty,
       };
     }
+    case 'DEDUCT_COINS':
+      return { ...state, totalCoins: Math.max(0, state.totalCoins - action.amount) };
     case 'NEXT_QUESTION':
       return { ...state, currentQuestionIndex: state.currentQuestionIndex + 1, wrongAnswersThisQuestion: 0 };
     case 'COMPLETE_LEVEL': {

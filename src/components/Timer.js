@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { motion } from 'framer-motion';
 
-export default function Timer({ duration = 15, running, onExpire, onTick }) {
+export default function Timer({ duration = 30, running, onExpire, onTick, boost = 0 }) {
   const [remaining, setRemaining] = useState(duration);
   const intervalRef = useRef(null);
 
   useEffect(() => {
     setRemaining(duration);
   }, [duration]);
+
+  useEffect(() => {
+    if (boost > 0) setRemaining((prev) => prev + 15);
+  }, [boost]);
 
   useEffect(() => {
     if (!running) {
