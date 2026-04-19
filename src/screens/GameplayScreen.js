@@ -76,7 +76,7 @@ export default function GameplayScreen() {
     setTimerRunning(true);
     if (timedOut) {
       setTimerBoost((prev) => prev + 1);
-      dispatch({ type: 'DEDUCT_COINS', amount: 5 });
+      dispatch({ type: 'DEDUCT_COINS', amount: 10 });
     }
     setTimedOut(false);
     setShuffledChoices((prev) => [...prev].sort(() => Math.random() - 0.5));
@@ -99,7 +99,7 @@ export default function GameplayScreen() {
     setMuted(nowMuted);
   };
 
-  const mascotMood = feedback === 'correct' ? 'happy' : feedback === 'wrong' ? 'sad' : 'idle';
+  const mascotMood = feedback === 'correct' ? 'happy' : feedback === 'wrong' ? (timedOut ? 'idle' : 'sad') : 'idle';
 
   return (
     <div className="min-h-screen bg-[#eef2ff] font-sans flex flex-col select-none">

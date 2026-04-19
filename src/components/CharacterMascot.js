@@ -6,6 +6,17 @@ export default function CharacterMascot({ character, mood = 'idle', size = 80 })
 
   const animations = {
     idle: { y: [0, -8, 0], transition: { duration: 2, repeat: Infinity, ease: 'easeInOut' } },
+    running: {
+      x:      [0, 50, 50,  0,  0, -50, -50,  0],
+      scaleX: [1,  1, -1, -1, -1,  -1,   1,  1],
+      y:      [0, -6,  0, -6,  0,  -6,   0, -6],
+      transition: {
+        duration: 3.2,
+        repeat: Infinity,
+        ease: 'linear',
+        times: [0, 0.23, 0.27, 0.48, 0.52, 0.73, 0.77, 1],
+      },
+    },
     happy: { rotate: [-10, 10, -10, 0], scale: [1, 1.2, 1], transition: { duration: 0.5 } },
     sad: { x: [-5, 5, -5, 0], transition: { duration: 0.4 } },
     thinking: { rotate: [0, 5, 0], transition: { duration: 1, repeat: Infinity } },
