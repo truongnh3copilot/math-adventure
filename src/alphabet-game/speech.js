@@ -19,8 +19,12 @@ let _pendingCallbacks = [];
 let _fallbackTimer = null;
 
 function onVoicesReady(cb) {
-  // Voices already available — call immediately
-  if (_voicesLoaded || window.speechSynthesis.getVoices().length > 0) {
+  // Only skip the wait if a Vietnamese voice is already present
+  if (_voicesLoaded) {
+    cb();
+    return;
+  }
+  if (window.speechSynthesis.getVoices().some((v) => v.lang.startsWith('vi'))) {
     _voicesLoaded = true;
     cb();
     return;
