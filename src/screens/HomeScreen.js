@@ -135,6 +135,23 @@ export default function HomeScreen() {
         </motion.button>
       </div>
 
+      {/* Alphabet Game banner */}
+      <div className="px-4 mt-4 max-w-lg mx-auto w-full">
+        <motion.button
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.97 }}
+          onClick={() => dispatch({ type: 'SET_SCREEN', screen: 'alphabetGame' })}
+          className="w-full flex items-center gap-4 bg-gradient-to-r from-violet-500 to-purple-600 border-2 border-b-[8px] border-purple-700 rounded-2xl px-5 py-4 text-white shadow-lg"
+        >
+          <span className="text-4xl">🇻🇳</span>
+          <div className="text-left">
+            <div className="font-black text-lg leading-tight">Học Chữ Cái Tiếng Việt</div>
+            <div className="text-xs font-bold opacity-80">29 chữ cái · 7 bài · 4 chế độ học</div>
+          </div>
+          <span className="ml-auto text-2xl">→</span>
+        </motion.button>
+      </div>
+
       {/* Footer hint */}
       <div className="text-center py-6 mt-auto">
         <span className="text-xs font-black text-slate-300 uppercase tracking-widest">

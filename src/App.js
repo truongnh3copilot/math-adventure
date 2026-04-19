@@ -7,6 +7,12 @@ import GameplayScreen from './screens/GameplayScreen';
 import LevelCompleteScreen from './screens/LevelCompleteScreen';
 import CharacterSelectScreen from './screens/CharacterSelectScreen';
 import ParentDashboardScreen from './screens/ParentDashboardScreen';
+import AlphabetGame from './alphabet-game/AlphabetGame';
+
+function AlphabetGameScreen() {
+  const { dispatch } = useGame();
+  return <AlphabetGame onBack={() => dispatch({ type: 'SET_SCREEN', screen: 'home' })} />;
+}
 
 const SCREEN_MAP = {
   home: HomeScreen,
@@ -15,6 +21,7 @@ const SCREEN_MAP = {
   levelComplete: LevelCompleteScreen,
   characterSelect: CharacterSelectScreen,
   parentDashboard: ParentDashboardScreen,
+  alphabetGame: AlphabetGameScreen,
 };
 
 function AppInner() {
